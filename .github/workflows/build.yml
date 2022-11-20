@@ -18,10 +18,12 @@ jobs:
         run: |
           curl -Ls https://sh.jbang.dev | bash -s - trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
           curl -Ls https://sh.jbang.dev | bash -s - app install --fresh --force quarkus@quarkusio
-      - name: Install docker
+      - name: Install podman
         run: |
-          curl -fsSL https://get.docker.com -o get-docker.sh
-          sh get-docker.sh
+          sudo apt-get -y update
+          sudo apt-get -y install podman
+          # curl -fsSL https://get.docker.com -o get-docker.sh
+          # sh get-docker.sh
       - name: Run tests
         run: |
           quarkus build --native
