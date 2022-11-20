@@ -26,7 +26,7 @@ jobs:
           # sh get-docker.sh
       - name: Run tests
         run: |
-          quarkus build --native
+          PATH=$PATH:~/.jbang/bin quarkus build --native
 
   pack-and-publish:
     name: Pack and publish
