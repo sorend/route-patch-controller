@@ -14,14 +14,17 @@ jobs:
         with:
           distribution: "temurin"
           java-version: '17'
+      - name: Install quarkus cli
+        run: |
+          curl -Ls https://sh.jbang.dev | bash -s - trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
+          curl -Ls https://sh.jbang.dev | bash -s - app install --fresh --force quarkus@quarkusio
       - name: Install docker
         run: |
           curl -fsSL https://get.docker.com -o get-docker.sh
           sh get-docker.sh
       - name: Run tests
         run: |
-          ./gradlew quarkusBuild
-          ./gradlew check
+          quarkus build --native
 
   pack-and-publish:
     name: Pack and publish
