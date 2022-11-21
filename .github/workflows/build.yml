@@ -10,6 +10,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}   # checkout the correct branch name
+          fetch-depth: 0                # fetch the whole repo history
       - uses: actions/setup-java@v3
         with:
           distribution: "temurin"
@@ -18,6 +21,8 @@ jobs:
         run: |
           curl -Ls https://sh.jbang.dev | bash -s - trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
           curl -Ls https://sh.jbang.dev | bash -s - app install --fresh --force quarkus@quarkusio
+      - name: Git Version
+        uses: codacy/git-version@2.5.4
       - name: Run tests
         run: |
           PATH=$PATH:~/.jbang/bin quarkus build -Dquarkus.container-image.build=true --native
