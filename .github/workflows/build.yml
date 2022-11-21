@@ -36,4 +36,5 @@ jobs:
           java-version: '17'
       - name: Publish
         run: |
+          docker image ls
           echo "TODO"
