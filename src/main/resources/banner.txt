@@ -1,0 +1,7 @@
+
+Openshift Route Patch Controller
+---
+Patches Routes to have the correct host domain in case it gets assigned
+the wrong domain because of a bug in Openshift :-)
+
+

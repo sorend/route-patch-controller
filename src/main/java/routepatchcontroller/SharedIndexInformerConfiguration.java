@@ -3,6 +3,7 @@ package routepatchcontroller;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.client.OpenShiftClient;
+import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.Startup;
 import io.quarkus.runtime.StartupEvent;
 import org.slf4j.Logger;
@@ -40,7 +41,7 @@ public class SharedIndexInformerConfiguration {
         logger.info("Informers started");
     }
 
-    public void shutdown(@Observes StartupEvent ev) {
+    public void shutdown(@Observes ShutdownEvent ev) {
         openShiftClient.informers().stopAllRegisteredInformers();
         logger.info("Informers shutdown");
     }

@@ -1,20 +1,21 @@
 package routepatchcontroller;
 
-import io.fabric8.kubernetes.api.model.MicroTime;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.ObjectReference;
 import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
-import io.fabric8.kubernetes.api.model.events.v1.EventBuilder;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Singleton
 public class RoutePatcherService {
 
     private static final Logger logger = LoggerFactory.getLogger(RoutePatcherService.class);
@@ -22,6 +23,7 @@ public class RoutePatcherService {
     private final OpenShiftClient openShiftClient;
     private final ServiceConfiguration serviceConfiguration;
 
+    @Inject
     public RoutePatcherService(OpenShiftClient openShiftClient, ServiceConfiguration serviceConfiguration) {
         this.openShiftClient = openShiftClient;
         this.serviceConfiguration = serviceConfiguration;
