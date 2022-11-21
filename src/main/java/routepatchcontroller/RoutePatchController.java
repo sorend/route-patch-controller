@@ -11,8 +11,6 @@ import javax.inject.Singleton;
 @Singleton
 public class RoutePatchController implements ResourceEventHandler<Route> {
 
-    private static final Logger logger = LoggerFactory.getLogger(RoutePatchController.class);
-
     private final RoutePatcherService routePatcherService;
 
     @Inject

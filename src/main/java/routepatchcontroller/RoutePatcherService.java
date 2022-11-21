@@ -1,8 +1,6 @@
 package routepatchcontroller;
 
 import io.fabric8.kubernetes.api.model.Namespace;
-import io.fabric8.kubernetes.api.model.ObjectReference;
-import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -53,7 +51,7 @@ public class RoutePatcherService {
     private void doPatchRoute(String routerName, Route route) {
         var name = route.getMetadata().getName();
         var host = route.getSpec().getHost();
-        var routeRef = RoutePatcherService.referenceForRoute(route);
+        var routeRef = KubernetesHelper.referenceForObj(route);
 
         var targetDomain = serviceConfiguration.routerDomains().get(routerName);
         if (targetDomain == null) {
@@ -100,16 +98,5 @@ public class RoutePatcherService {
 
     private static String namespaceRouter(ServiceConfiguration serviceConfiguration, Namespace namespace) {
         return KubernetesHelper.labelValue(namespace, serviceConfiguration.namespaceRouterLabel()).orElse(serviceConfiguration.defaultRouter());
-    }
-
-    private static ObjectReference referenceForRoute(Route route) {
-        return new ObjectReferenceBuilder()
-                .withKind(route.getKind())
-                .withApiVersion(route.getApiVersion())
-                .withName(route.getMetadata().getName())
-                .withNamespace(route.getMetadata().getNamespace())
-                .withUid(route.getMetadata().getUid())
-                .withResourceVersion(route.getMetadata().getResourceVersion())
-                .build();
     }
 }

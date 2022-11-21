@@ -3,6 +3,7 @@ package routepatchcontroller;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.MicroTime;
 import io.fabric8.kubernetes.api.model.ObjectReference;
+import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
 import io.fabric8.kubernetes.api.model.events.v1.EventBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 
@@ -30,4 +31,16 @@ public class KubernetesHelper {
                 .build();
         client.events().v1().events().inNamespace(namespace).resource(event).create();
     }
+
+    public static ObjectReference referenceForObj(HasMetadata route) {
+        return new ObjectReferenceBuilder()
+                .withKind(route.getKind())
+                .withApiVersion(route.getApiVersion())
+                .withName(route.getMetadata().getName())
+                .withNamespace(route.getMetadata().getNamespace())
+                .withUid(route.getMetadata().getUid())
+                .withResourceVersion(route.getMetadata().getResourceVersion())
+                .build();
+    }
+
 }
