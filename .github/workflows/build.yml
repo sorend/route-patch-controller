@@ -21,8 +21,10 @@ jobs:
         run: |
           curl -Ls https://sh.jbang.dev | bash -s - trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
           curl -Ls https://sh.jbang.dev | bash -s - app install --fresh --force quarkus@quarkusio
-      - name: Git Version
-        uses: codacy/git-version@2.5.4
+      - id: get_version
+        uses: battila7/get-version-action@v2
+      - run: echo ${{ steps.get_version.outputs.version }}
+      - run: echo ${{ steps.get_version.outputs.version-without-v }}
       - name: Run tests
         run: |
           PATH=$PATH:~/.jbang/bin quarkus build -Dquarkus.container-image.build=true --native
