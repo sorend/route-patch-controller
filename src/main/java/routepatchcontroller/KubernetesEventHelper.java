@@ -7,19 +7,13 @@ import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
 import io.fabric8.kubernetes.api.model.events.v1.EventBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 
-import java.util.Optional;
-
-public class KubernetesHelper {
-    public static Optional<String> labelValue(HasMetadata resource, String label) {
-        return Optional.ofNullable(resource.getMetadata().getLabels())
-                .flatMap(labels -> Optional.ofNullable(labels.get(label)));
-    }
-
+public class KubernetesEventHelper {
     public static void createEvent(OpenShiftClient client, String instanceName, String namespace, ObjectReference regarding, String note) {
         // emit event for the route
         var event = new EventBuilder().withNewMetadata()
-                .withGenerateName("route-patch-controller")
-                .withNamespace(namespace).endMetadata()
+                    .withGenerateName("route-patch-controller")
+                    .withNamespace(namespace)
+                .endMetadata()
                 .withRegarding(regarding)
                 .withReportingController("route-patch-controller")
                 .withReportingInstance(instanceName)
@@ -29,6 +23,7 @@ public class KubernetesHelper {
                 .withEventTime(new MicroTime())
                 .withNote(note)
                 .build();
+        System.out.println("event " + event);
         client.events().v1().events().inNamespace(namespace).resource(event).create();
     }
 
@@ -42,5 +37,4 @@ public class KubernetesHelper {
                 .withResourceVersion(route.getMetadata().getResourceVersion())
                 .build();
     }
-
 }

@@ -1,59 +1,27 @@
-# openshift-route-patch-controller Project
+# openshift-route-patch-controller -- a controller for patching Openshift Routes if there are multiple ingress controllers.
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+There is a bug in Openshift, so when you run multiple Ingress controllers (more external endpoints), then routes will be
+created on the default ingress controller instead of the ingress controller designated to the namespace.
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+This controller patches routes .spec.host which are created for the wrong ingress controller.
 
-## Running the application in dev mode
+## Installation
 
-You can run your application in dev mode that enables live coding using:
-```shell script
-./gradlew quarkusDev
+See [deploy](deploy/)
+
+You need to edit [deploy/controller.yaml](deploy/controller.yaml) before applying. The application.properties
+configmap must match your setup.
+
+```yaml
+application.properties: |-
+  service.namespace-router-label = router
+  service.default-router = apps
+  service.router-domains."apps" = apps.mycluster.com
+  service.router-domains."prod" = prod.mycluster.com
+  service.router-domains."dev" = dev.mycluster.com
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
-
-## Packaging and running the application
-
-The application can be packaged using:
-```shell script
-./gradlew build
-```
-It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `build/quarkus-app/lib/` directory.
-
-The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./gradlew build -Dquarkus.package.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar build/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using: 
-```shell script
-./gradlew build -Dquarkus.package.type=native
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
-./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./build/openshift-route-patch-controller-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/gradle-tooling.
-
-## Provided Code
-
-### RESTEasy Reactive
-
-Easily start your Reactive RESTful Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
-hello
-hello
-hello
+* `service.namespace-router-label` -- this is the label on the Namespace which is used to control which ingress controller 
+  routes in the namespace should use.
+* `service.default-router` -- this is the default router if there is no label on the Namespace.
+* `service.router-domains."domain"` -- these specify the domain-postfix which each ingress controller uses.

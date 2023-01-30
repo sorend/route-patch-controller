@@ -13,7 +13,7 @@ public interface ServiceConfiguration {
 
     String defaultRouter();
 
-    Map<String, String> namespaceFilters();
+    String namespaceLabelSelector();
 
     String instanceName();
 }

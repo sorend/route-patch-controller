@@ -27,7 +27,7 @@ jobs:
       - run: echo ${{ steps.get_version.outputs.version-without-v }}
       - name: Run tests
         run: |
-          PATH=$PATH:~/.jbang/bin quarkus build -Dquarkus.container-image.build=true --native
+          PATH=$PATH:~/.jbang/bin quarkus build -Dquarkus.container-image.build=true
 
   pack-and-publish:
     name: Pack and publish
