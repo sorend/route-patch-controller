@@ -12,6 +12,9 @@ rules:
   - apiGroups: [""] # "" indicates the core API group
     resources: ["namespaces"]
     verbs: ["get", "watch", "list"]
+  - apiGroups: ["operator.openshift.io"]
+    resources: ["ingresscontrollers"]
+    verbs: ["get", "watch", "list"]
   - apiGroups: ["route.openshift.io"] # "" indicates the core API group
     resources: ["routes"]
     verbs: ["get", "watch", "list", "patch"]
@@ -50,10 +53,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-          volumeMounts:
-            - name: config
-              mountPath: /config
-              readOnly: true
           resource:
             requests:
               cpu: 100m
@@ -66,15 +65,3 @@ spec:
           configMap:
             name: route-patch-controller
       restartPolicy: Always
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: route-patch-controller
-data:
-  application.properties: |
-    service.namespace-router-label = router
-    service.default-router = apps
-    service.router-domains."apps" = apps.mycluster.com
-    service.router.domains."prod" = prod.mycluster.com
-    service.router.domains."dev" = dev.mycluster.com

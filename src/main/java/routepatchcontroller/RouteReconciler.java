@@ -3,6 +3,7 @@ package routepatchcontroller;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.api.model.RouteBuilder;
+import io.fabric8.openshift.api.model.operator.v1.IngressController;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.javaoperatorsdk.operator.api.config.informer.InformerConfiguration;
 import io.javaoperatorsdk.operator.api.reconciler.*;
@@ -22,13 +23,15 @@ import java.util.stream.Collectors;
 @Singleton
 public class RouteReconciler implements Reconciler<Route>, EventSourceInitializer<Route> {
 
+    private static final String LABEL_SKIP = "ose.openshift.dk/skip-route-patch";
+
     private static final Logger logger = LoggerFactory.getLogger(RouteReconciler.class);
 
     @Inject
     OpenShiftClient openShiftClient;
 
     @Inject
-    ServiceConfiguration serviceConfiguration;
+    InnerServiceConfiguration.Configuration serviceConfiguration;
 
     /**
      * Creates a secondary resource of the namespace of the router. This ensures that when the namespace is updated,
@@ -37,46 +40,56 @@ public class RouteReconciler implements Reconciler<Route>, EventSourceInitialize
     @Override
     public Map<String, EventSource> prepareEventSources(EventSourceContext<Route> context) {
         final SecondaryToPrimaryMapper<Namespace> routesForNamespace = (Namespace t) -> context.getPrimaryCache()
-                        .list(route -> route.getMetadata().getNamespace().equals(t.getMetadata().getName()))
-                        .map(ResourceID::fromResource)
-                        .collect(Collectors.toSet());
+                .list(route -> route.getMetadata().getNamespace().equals(t.getMetadata().getName()))
+                .map(ResourceID::fromResource)
+                .collect(Collectors.toSet());
         final var configuration = InformerConfiguration.from(Namespace.class, context)
-                        .withLabelSelector(serviceConfiguration.namespaceLabelSelector())
-                        .withSecondaryToPrimaryMapper(routesForNamespace)
-                        .build();
+                .withSecondaryToPrimaryMapper(routesForNamespace)
+                .build();
         return EventSourceInitializer.nameEventSources(new InformerEventSource<>(configuration, context));
     }
 
     @Override
     public UpdateControl<Route> reconcile(Route resource, Context<Route> context) throws Exception {
         final var name = resource.getMetadata().getName();
-        final var namespace = context.getSecondaryResource(Namespace.class).orElse(null);
+        final var namespaceName = resource.getMetadata().getNamespace();
+
+        final var skipLabel = KubernetesHelper.labelValue(resource, LABEL_SKIP);
+        if (skipLabel.isPresent()) {
+            logger.info("{}/{}: Has label {} -- ignoring", name, namespaceName, LABEL_SKIP);
+            return UpdateControl.noUpdate();
+        }
+
+        // find the namespace of the resource
+        final var namespace = context.getSecondaryResource(Namespace.class).orElse(openShiftClient.namespaces().withName(namespaceName).get()); // get from cache or directly if fails
         if (namespace == null) {
-            logger.debug("{}: Route is not in namespace with labelSelector {} -- ignoring", name, serviceConfiguration.namespaceLabelSelector());
+            logger.warn("{}/{}: Namespace not found for Route -- ignoring", name, namespaceName);
             return UpdateControl.noUpdate();
         }
 
+        final var includeNamespace = serviceConfiguration.namespaceLabelSelector.map(s -> KubernetesHelper.evalLabelSelectorOn(s, namespace)).orElse(true);
+        if (!includeNamespace) {
+            logger.debug("{}/{}: Namespace not matched by label selector -- ignoring", name, namespaceName);
+            return UpdateControl.noUpdate();
+        }
+
+        // find which ingressController this resource belongs to
+        final var ingressControllers = openShiftClient.resources(IngressController.class).inAnyNamespace().list().getItems();
+        final var ingressController = ingressControllers.stream()
+                .filter(x -> KubernetesHelper.evalLabelSelectorOn(x.getSpec().getRouteSelector(), resource) || KubernetesHelper.evalLabelSelectorOn(x.getSpec().getNamespaceSelector(), namespace))
+                .findFirst().orElse(null);
+        if (ingressController == null) {
+            logger.debug("{}/{}: Route is not matched by any ingressController -- ignoring", name, namespaceName);
+            return UpdateControl.noUpdate();
+        }
+
+        // find the domain of the ingress controller
+        final var targetDomain = Optional.ofNullable(ingressController.getSpec().getDomain()).orElse(ingressController.getStatus().getDomain());
         final var host = resource.getSpec().getHost();
-        final var routeRef = KubernetesEventHelper.referenceForObj(resource);
+        final var currentDomain = host.substring(host.indexOf('.') + 1);
 
-        // find router name from namespace label
-        final var routerName = Optional.ofNullable(namespace.getMetadata().getLabels()).flatMap(labels -> Optional.ofNullable(labels.get(serviceConfiguration.namespaceRouterLabel()))).orElse(serviceConfiguration.defaultRouter());
-
-        final var targetDomain = serviceConfiguration.routerDomains().get(routerName);
-        if (targetDomain == null) {
-            logger.warn("{}: no route domain found for router {} -- check 'service.router-domains' in configuration", name, routerName);
-            return UpdateControl.noUpdate();
-        }
-
-        final var currentDomainOpt = serviceConfiguration.routerDomains().values().stream().filter(host::endsWith).findFirst();
-        if (currentDomainOpt.isEmpty()) {
-            logger.warn("{}: could not detect current router from {} -- check 'service.router-domains' in configuration", name, host);
-            return UpdateControl.noUpdate();
-        }
-
-        final var currentDomain = currentDomainOpt.get();
         if (targetDomain.equals(currentDomain)) {
-            logger.debug("{}: already has correct domain {}", name, targetDomain);
+            logger.debug("{}/{}: already has correct domain {}", name, namespaceName, targetDomain);
             return UpdateControl.noUpdate();
         }
 
@@ -88,8 +101,9 @@ public class RouteReconciler implements Reconciler<Route>, EventSourceInitialize
         logger.debug("Patching route {} to {}", resource, newRoute);
 
         // emit event for the route
-        final var note = String.format("Patched .spec.host from %s to %s based on namespace router %s", host, newHost, routerName);
-        KubernetesEventHelper.createEvent(openShiftClient, serviceConfiguration.instanceName(), resource.getMetadata().getNamespace(), routeRef, note);
+        final var note = String.format("Patching .spec.host from %s to %s based on namespace router %s", host, newHost, ingressController.getMetadata().getName());
+        final var routeRef = KubernetesHelper.referenceForObj(resource);
+        KubernetesHelper.createEvent(openShiftClient, serviceConfiguration.instanceName, resource.getMetadata().getNamespace(), routeRef, "HostRouterMismatch", "Patched", note);
 
         // done
         return UpdateControl.patchResourceAndStatus(newRoute);

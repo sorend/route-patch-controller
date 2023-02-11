@@ -2,18 +2,9 @@ package routepatchcontroller;
 
 import io.smallrye.config.ConfigMapping;
 
-import java.util.Map;
+import java.util.Optional;
 
 @ConfigMapping(prefix="service")
 public interface ServiceConfiguration {
-
-    Map<String, String> routerDomains();
-
-    String namespaceRouterLabel();
-
-    String defaultRouter();
-
-    String namespaceLabelSelector();
-
-    String instanceName();
+    Optional<String> namespaceLabelSelector(); // only eval routes in namespaces matching this selector
 }

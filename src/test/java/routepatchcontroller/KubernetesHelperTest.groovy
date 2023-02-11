@@ -6,7 +6,7 @@ import io.fabric8.openshift.client.OpenShiftClient
 import io.fabric8.openshift.client.server.mock.OpenShiftMockServer
 import spock.lang.Specification
 
-class KubernetesEventHelperTest extends Specification {
+class KubernetesHelperTest extends Specification {
 
 
     OpenShiftMockServer openShiftMockServer
@@ -21,10 +21,10 @@ class KubernetesEventHelperTest extends Specification {
         given:
         String name = "myinstance"
         String namespace = "mynamespace"
-        ObjectReference objectRegarding = KubernetesEventHelper.referenceForObj(new RouteBuilder().withNewMetadata().withName(name).withNamespace(namespace).withResourceVersion("v1").endMetadata().build())
+        ObjectReference objectRegarding = KubernetesHelper.referenceForObj(new RouteBuilder().withNewMetadata().withName(name).withNamespace(namespace).withResourceVersion("v1").endMetadata().build())
 
         when:
-        KubernetesEventHelper.createEvent(openShiftClient, name, namespace, objectRegarding, "hello")
+        KubernetesHelper.createEvent(openShiftClient, name, namespace, objectRegarding, "RouteMismatch", "Patched", "hello")
         def req = openShiftMockServer.lastRequest
 
         then:

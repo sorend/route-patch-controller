@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-    implementation enforcedPlatform('io.quarkiverse.operatorsdk:quarkus-operator-sdk-bom:5.0.3')
+    implementation enforcedPlatform('io.quarkiverse.operatorsdk:quarkus-operator-sdk-bom:5.0.4')
     implementation 'io.quarkiverse.operatorsdk:quarkus-operator-sdk'
     implementation 'io.quarkus:quarkus-container-image-docker'
     implementation 'io.quarkus:quarkus-micrometer-registry-prometheus'
