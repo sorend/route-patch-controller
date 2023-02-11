@@ -41,4 +41,3 @@ jobs:
             -Dquarkus.container-image.additional-tags=latest \
             -Dquarkus.container-image.username=$GHCR_USERNAME \
             -Dquarkus.container-image.password=$GHCR_TOKEN
-
