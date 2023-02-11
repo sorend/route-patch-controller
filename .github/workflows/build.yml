@@ -26,11 +26,18 @@ jobs:
       - run: echo ${{ steps.get_version.outputs.version }}
       - run: echo ${{ steps.get_version.outputs.version-without-v }}
       - name: Run tests
+        env:
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
           PATH=$PATH:~/.jbang/bin quarkus build \
             -Dquarkus.container-image.build=true \
             -Dquarkus.container-image.push=true \
+            -Dquarkus.container-image.registry=ghcr.io \
             -Dquarkus.container-image.group=sorend \
             -Dquarkus.container-image.name=route-patch-controller \
-            -Dquarkus.container-image.additional-tags=latest 
+            -Dquarkus.container-image.tag=${{ steps.get_version.outputs.version }} \
+            -Dquarkus.container-image.additional-tags=latest \
+            -Dquarkus.container-image.username=$GHCR_USERNAME \
+            -Dquarkus.container-image.password=$GHCR_TOKEN
 
