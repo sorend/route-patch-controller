@@ -36,7 +36,7 @@ kind: Deployment
 metadata:
   name: route-patch-controller
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: route-patch-controller
@@ -48,20 +48,12 @@ spec:
       containers:
         - name: controller
           image: ghcr.io/sorend/route-patch-controller:latest
-          env:
-            - name: SERVICE_INSTANCE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
           resource:
             requests:
               cpu: 100m
               memory: 500Mi
             limits:
-              cpu: 300m
+              cpu: 100m
               memory: 500Mi
-      volumes:
-        - name: config
-          configMap:
-            name: route-patch-controller
       restartPolicy: Always
+      serviceAccountName: route-patch-controller
