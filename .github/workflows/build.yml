@@ -38,6 +38,7 @@ jobs:
         run: |
           PATH=$PATH:~/.jbang/bin quarkus build \
             --native \
+            -Dquarkus.devservices.enabled=false \
             -Dquarkus.docker.buildx.platform=${{ matrix.docker_target }} \
             -Dquarkus.container-image.build=true \
             -Dquarkus.container-image.push=true \
