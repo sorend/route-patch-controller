@@ -5,12 +5,11 @@ on: [push, pull_request]
 
 jobs:
   run-tests:
-    name: Test
+    name: Build
     runs-on: ubuntu-latest
     strategy:
       matrix:
         docker_target: [ 'linux/amd64', 'linux/arm64']
-    
     steps:
       - uses: actions/checkout@v3
         with:
@@ -20,6 +19,10 @@ jobs:
         with:
           distribution: "temurin"
           java-version: '17'
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: ${{ matrix.docker_target }}
       - name: Install quarkus cli
         run: |
           curl -Ls https://sh.jbang.dev | bash -s - trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
