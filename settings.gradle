@@ -8,4 +8,4 @@ pluginManagement {
         id "${quarkusPluginId}" version "${quarkusPluginVersion}"
     }
 }
-rootProject.name='openshift-route-patch-controller'
+rootProject.name='route-patch-controller'
